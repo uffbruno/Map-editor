@@ -33,32 +33,27 @@ RESOURCESDIR=resources
 
 # 'make' looks for objects in the directories specified by VPATH
 VPATH=$(SRCDIR);$(OBJDIR);$(BINDIR)
-COMMON_OBJECTS=button.o animation.o character.o map2d.o sprite.o bounding_box.o char_2d.o mapgrid.o tile.o
+COMMON_OBJECTS=button.o animation.o character.o map2d.o sprite.o bounding_box.o char_2d.o mapgrid.o tile.o map_editor.o
 MAPEDITOR_OBJECTS=main.o
-TESTGUI_OBJECTS=testgui_main.o
 EXECUTABLE=mapeditor.exe
-TESTGUI=testgui
 
-all: $(EXECUTABLE) $(TESTGUI)
+all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(COMMON_OBJECTS) $(MAPEDITOR_OBJECTS)
 	$(CC) -o $(BINDIR)\$(EXECUTABLE) $(COMMON_OBJECTS) $(MAPEDITOR_OBJECTS) $(A5LINKFLAGS) $(WIN32LINKFLAGS)
-
-$(TESTGUI): $(COMMON_OBJECTS) $(TESTGUI_OBJECTS)
-	$(CC) -o $(BINDIR)\$(TESTGUI).exe $(COMMON_OBJECTS) $(TESTGUI_OBJECTS) $(A5LINKFLAGS) $(WIN32LINKFLAGS)
     
 #header file dependencies
-main.o: button.hpp
+main.o: map_editor.hpp
 button.o: button.hpp
-mapgrid.o: mapgrid.hpp
-animation.o: animation.hpp
-character.o: character.hpp
-map2d.o: map2d.hpp
-sprite.o: sprite.hpp
-bounding_box.o: bounding_box.hpp
-char_2d.o: char_2d.hpp
-tile.o: tile.hpp
-testgui_main.o: button.hpp mapgrid.hpp
+mapgrid.o: mapgrid.hpp map2d.hpp
+animation.o: animation.hpp bounding_box.hpp
+character.o: character.hpp game_object.hpp
+map2d.o: map2d.hpp tile.hpp
+sprite.o: sprite.hpp animation.hpp
+bounding_box.o: bounding_box.hpp vector2d.hpp
+char_2d.o: char_2d.hpp character.hpp
+tile.o: tile.hpp game_object.hpp
+map_editor.o: map_editor.hpp mapgrid.hpp button.hpp
 
 dist: $(EXECUTABLE)
 	$(MKDIR) $(DISTDIR)
@@ -70,18 +65,10 @@ dist: $(EXECUTABLE)
 dist-zip: dist
 	7z a $(DISTDIR).zip $(DISTDIR)\* -r
     
-clean: clean-testgui clean-mapeditor
-	$(RM) $(COMMON_OBJECTS)
+clean:
+	$(RM) $(COMMON_OBJECTS) $(MAPEDITOR_OBJECTS) $(EXECUTABLE)
 
 .PHONY: clean-dist
 clean-dist:
 	$(RM) -rf $(DISTDIR)
 	$(RM) $(DISTDIR).zip
-    
-.PHONY: clean-mapeditor
-clean-mapeditor:
-	$(RM) $(MAPEDITOR_OBJECTS) $(BINDIR)\$(EXECUTABLE)
-    
-.PHONY: clean-testgui
-clean-testgui:
-	$(RM) $(TESTGUI_OBJECTS) $(BINDIR)\$(TESTGUI).exe
