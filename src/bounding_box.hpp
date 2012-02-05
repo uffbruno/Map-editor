@@ -11,18 +11,18 @@ class bounding_box {
 
         ~bounding_box();
         
-        float left() const   { return center.x - w/2; }
-        float top() const    { return center.y - h/2; }
-        float right() const  { return center.x + w/2; }
-        float bottom() const { return center.y + h/2; }
+        float left() const   { return position.x; }
+        float top() const    { return position.y; }
+        float right() const  { return position.x + w; }
+        float bottom() const { return position.y + h; }
         
-        void set_x(float x) { center.x = x; }
-        void set_y(float y) { center.y = y; }
+        void set_x(float x) { position.x = x; }
+        void set_y(float y) { position.y = y; }
         void set_w(int w)   { this->w = w; }
         void set_h(int h)   { this->h = h; }
         
-        float get_x() const { return center.x; }
-        float get_y() const { return center.y; }
+        float get_x() const { return position.x; }
+        float get_y() const { return position.y; }
 		float get_w() const { return w; }
 		float get_h() const { return h; }
         
@@ -37,7 +37,7 @@ class bounding_box {
         bool collide(const bounding_box& other, vector2d& normal) const;
 
     private:
-        vector2d center;
+        vector2d position;
 		
         float w;
         float h;

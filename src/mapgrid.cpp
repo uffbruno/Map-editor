@@ -14,7 +14,6 @@ mapgrid::mapgrid(int x, int y, int visiblewidth, int visibleheight): x(x),
                                                                      m(),
                                                                      map_bitmap(0),
                                                                      visible_bitmap(0) {
-    visible_bitmap = al_create_bitmap(visiblewidth, visibleheight);
 }
 
 mapgrid::~mapgrid() {
@@ -33,12 +32,17 @@ bool mapgrid::load_map(const std::string& mapfile) {
     }
     
     map_bitmap = al_create_bitmap(width, height);
+    visible_bitmap = al_create_bitmap(visiblewidth, visibleheight);
     
     return true;
 }
 
 bool mapgrid::save_map(const std::string& mapfile) {
     return m.save_map(mapfile);
+}
+
+void mapgrid::set_tile_id(unsigned int x, unsigned int y, unsigned int id) {
+    m.set_tile_id(x, y, id);
 }
 
 void mapgrid::draw() {
@@ -119,6 +123,13 @@ void mapgrid::handle_input(const ALLEGRO_EVENT& ev) {
                 std::cout << "width = " << width << std::endl;
                 std::cout << "visiblewidth = " << visiblewidth << std::endl;
             }
+        }
+    }
+    
+    if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
+        //temporarily
+        if (is_over(ev.mouse.x, ev.mouse.y)) {
+            m.set_tile_id(ev.mouse.x + mapx - this->x, ev.mouse.y + mapy - this->y, 175);
         }
     }
 }

@@ -3,14 +3,14 @@
 #include "bounding_box.hpp"
 
 bounding_box::bounding_box(float x, float y, float w, float h, bool ic):
-    center(x, y), w(w), h(h), ignore_collision(ic), color() {
+    position(x, y), w(w), h(h), ignore_collision(ic), color() {
 }
 
 bounding_box::~bounding_box() {
 }
 
 void bounding_box::draw() const {
-    al_draw_rectangle(left(), top(), right(), bottom(), color, 0);
+    al_draw_rectangle(position.x, position.y, position.x + w, position.y + h, color, 0);
 }
 
 /*-----------------------------------------------------------------------------------------------
@@ -33,9 +33,14 @@ bool bounding_box::collide(const bounding_box& other, vector2d& normal) const {
     // The absDistance between the objects
     vector2d abs_distance(0,0);
 
+    float center_x1 = this->position.x + this->w/2;
+    float center_y1 = this->position.x + this->h/2;
+    float center_x2 = other.position.x + other.h/2;
+    float center_y2 = other.position.y + other.h/2;
+    
     // Calculate the distance between A and B
-    distance.x = other.center.x - this->center.x;
-    distance.y = other.center.y - this->center.y;
+    distance.x = center_x2 - center_x1;
+    distance.y = center_y2 - center_y1;
 
     // Combine both rectangles and half the returned value
     float xadd = (other.w + this->w) / 2.0f;

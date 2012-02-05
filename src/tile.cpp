@@ -1,14 +1,13 @@
 #include "tile.hpp"
 
+tile::tile(int x, int y, int w, int h, int id): 
+    game_object(x,y,w,h), tile_id(id) {
+    bb.set_color(al_map_rgb(255,255,255));  
+}
+
 tile::~tile() {
-    if (image) {
-        al_destroy_bitmap(image);
-        image = NULL;
-    }
 }
 
 void tile::draw() const {
-    if (image) {
-        al_draw_bitmap(image, bb.get_x(), bb.get_y(), 0);
-    }
+    bb.draw();
 }

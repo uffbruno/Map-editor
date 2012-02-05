@@ -1,7 +1,8 @@
-#include "character.hpp"
 #include <sstream>
 #include <fstream>
 #include <iostream>
+
+#include "character.hpp"
 
 character::character(float pos_x, float pos_y, float speed_x, float speed_y, 
     const std::string& directory): game_object(pos_x, pos_y, 0, 0), 

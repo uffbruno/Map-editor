@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdio>
 #include <cstdlib>
 #include <sstream>
 #include <allegro5/allegro.h>
@@ -6,7 +7,20 @@
 
 #include "map2d.hpp"
 
-map2d::map2d(): cell_size(0), rows(0), cols(0), width(0), height(0), cells(), tiles() {
+map2d::map2d(): cell_size(0), 
+                rows(0), 
+                cols(0), 
+                width(0), 
+                height(0), 
+                tile_horizontal_gap(0), 
+                tile_vertical_gap(0), 
+                offset(0), 
+                tileset_filename(), 
+                default_tile_id(0),  
+                cells(), 
+                tiles()
+ {
+
 }
 
 map2d::~map2d() {
@@ -43,8 +57,11 @@ bool map2d::load_map(const std::string& mapname) {
         return false;
     }
     
-    rows = std::atoi(number_of_rows);
-    cols = std::atoi(number_of_cols);
+    const char *default_tileid = al_get_config_value(map_config, "map", "default_tile_id");
+    
+    rows            = std::atoi(number_of_rows);
+    cols            = std::atoi(number_of_cols);
+    default_tile_id = std::atoi(default_tileid);
     
     if (!rows || !cols) {
         std::cout << "invalid row / column value" << std::endl;
@@ -52,23 +69,23 @@ bool map2d::load_map(const std::string& mapname) {
     }
     
     int pos_y = 0;
-    for (int i = 0; i < rows; ++i) {
+    for (unsigned int i = 0; i < rows; ++i) {
         std::ostringstream oss_row;
         oss_row << "row " << i;
 
         int pos_x = 0;
-        for (int j = 0; j < cols; ++j) {
+        for (unsigned int j = 0; j < cols; ++j) {
             std::ostringstream oss_col;
             oss_col << "col_" << j << "_id";
             const char *sid = al_get_config_value(map_config, oss_row.str().c_str(), 
                                                        oss_col.str().c_str());
 
-            int id = 0;
+            int id = default_tile_id;
             if (sid) {
                 id = std::atoi(sid);
             }
             
-            tile *t = new tile(tiles[id], pos_x, pos_y, cell_size, cell_size);
+            tile *t = new tile(pos_x, pos_y, cell_size, cell_size, id);
             cells.push_back(t);
             pos_x += cell_size;
         }
@@ -84,9 +101,67 @@ bool map2d::load_map(const std::string& mapname) {
 }
 
 bool map2d::save_map(const std::string& mapname) {
-    //temporarily, to get rid of a warning. remove with final implementation.
-    if (mapname.empty()) {};
+    ALLEGRO_CONFIG* config = al_create_config();
     
+    const int max_chars = 100;
+    char *values = new char[max_chars];
+    
+    //tileset information
+    al_add_config_section(config, "tileset");
+    al_set_config_value(config, "tileset", "tileset_file"       , tileset_filename.c_str());
+    
+    std::sprintf(values, "%d", cell_size);
+    al_set_config_value(config, "tileset", "tile_dimension"     , values);
+    
+    std::sprintf(values, "%d", tile_horizontal_gap);
+    al_set_config_value(config, "tileset", "tile_horizontal_gap", values);
+    
+    std::sprintf(values, "%d", tile_vertical_gap);
+    al_set_config_value(config, "tileset", "tile_vertical_gap"  , values);
+    
+    std::sprintf(values, "%d", offset);
+    al_set_config_value(config, "tileset", "offset"             , values);
+    
+    //map metadata
+    al_add_config_section(config, "map");
+    
+    std::sprintf(values, "%d", rows);
+    al_set_config_value(config, "map", "number_of_rows", values);
+    
+    std::sprintf(values, "%d", cols);
+    al_set_config_value(config, "map", "number_of_cols", values);
+    
+    std::sprintf(values, "%d", default_tile_id);
+    al_set_config_value(config, "map", "default_tile_id", values);
+    
+    //map data
+    char *rowcat = new char[max_chars];
+    char *colkeys = new char[max_chars];
+    for (unsigned int i = 0; i < rows; ++i) {
+        std::sprintf(rowcat, "row %d", i);
+        al_add_config_section(config, rowcat);
+        
+        for (unsigned int j = 0; j < cols; ++j) {
+            unsigned int tile_id = cells[i * cols + j]->get_id();
+            
+            if (tile_id != default_tile_id) {
+                std::sprintf(colkeys, "col_%d_id", j);
+                std::sprintf(values, "%d", cells[i * cols + j]->get_id());
+                al_set_config_value(config, rowcat, colkeys, values);
+            }
+        }
+    }
+    
+    delete [] values;
+    delete [] colkeys;
+    delete [] rowcat;
+    
+    if (!al_save_config_file(mapname.c_str(), config)) {
+        std::cout << "error saving " << mapname << std::endl;
+        return false;
+    }
+    
+    al_destroy_config(config);
     return true;
 }
 
@@ -136,18 +211,23 @@ bool map2d::load_tileset(const std::string& imgname, int cell_dimension, int gap
                          
     ALLEGRO_BITMAP *tileimg = al_load_bitmap(imgname.c_str());
     if (!tileimg) {
-        std::cout << "tileset file not found" << std::endl;
+        std::cout << "tileset file not found: " << imgname << std::endl;
         return false;
     }
     
+    this->tile_horizontal_gap = gap_x;
+    this->tile_vertical_gap = gap_y;
+    this->offset = offset;
+    this->cell_size = cell_dimension;
+    this->tileset_filename.assign(imgname.c_str());
+    
     std::cout << "loading " << imgname << std::endl;
     
-    int pos_x         = offset;
-    int pos_y         = offset;
-    int bitmap_width  = al_get_bitmap_width(tileimg);
-    int bitmap_height = al_get_bitmap_height(tileimg);
+    unsigned int pos_x         = this->offset;
+    unsigned int pos_y         = this->offset;
+    unsigned int bitmap_width  = al_get_bitmap_width(tileimg);
+    unsigned int bitmap_height = al_get_bitmap_height(tileimg);
     
-    cell_size = cell_dimension;
     while (pos_y < bitmap_height) {
         if (pos_x + cell_size < bitmap_width) {
             ALLEGRO_BITMAP *tile = al_clone_bitmap(al_create_sub_bitmap(tileimg, 
@@ -167,10 +247,10 @@ bool map2d::load_tileset(const std::string& imgname, int cell_dimension, int gap
             tiles.push_back(tile);
             std::cout << "tile loaded sucessfully" << std::endl;
         
-            pos_x += cell_size + gap_x;
+            pos_x += cell_size + tile_horizontal_gap;
         } else {
-            pos_x = offset;
-            pos_y += cell_size + gap_y;
+            pos_x = this->offset;
+            pos_y += cell_size + tile_vertical_gap;
         }
     }
     
@@ -178,18 +258,18 @@ bool map2d::load_tileset(const std::string& imgname, int cell_dimension, int gap
     return true;
 }
 
-int map2d::calc_width() const {
-    int width = 0;
-    for (int i = 0; i < cols; ++i) {
+unsigned int map2d::calc_width() const {
+    unsigned int width = 0;
+    for (unsigned int i = 0; i < cols && i < cells.size(); ++i) {
         width += cells[i]->get_w();
     }
     
     return width;
 }
 
-int map2d::calc_height() const {
-    int height = 0;
-    for (int i = 0; i < rows; ++i) {
+unsigned int map2d::calc_height() const {
+    unsigned int height = 0;
+    for (unsigned int i = 0; i < rows; ++i) {
         height += cells[i]->get_h();
     }
     
@@ -199,6 +279,26 @@ int map2d::calc_height() const {
 void map2d::draw() const {
     cell_collection::const_iterator i;
     for (i = cells.begin(); i != cells.end(); ++i) {
-        (*i)->draw();
+        tile *t = (*i);
+        al_draw_bitmap(tiles.at(t->get_id()), t->get_x(), t->get_y(), 0);
     }
 }
+
+void map2d::set_tile_id(unsigned int x, unsigned int y, unsigned int id) {
+    if (x > width || y > height || id > tiles.size()) return;
+
+    
+    unsigned int row = (y / cell_size);
+    unsigned int col = (x / cell_size);
+
+    std::cout << "x = " << x << std::endl;
+    std::cout << "y = " << y << std::endl;
+    std::cout << "row = " << row << std::endl;
+    std::cout << "col = " << col << std::endl;
+    
+    tile *t = cells.at(row * cols + col);
+    
+    std::cout << "row * cols + col = " << row * cols + col << std::endl;
+    t->set_id(id);
+}
+

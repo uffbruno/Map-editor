@@ -23,20 +23,29 @@ class map2d {
                           int offset = 0);
                           
         void draw() const;
-        int get_width() const { return width; }
-        int get_height() const { return height; }
+        
+        void set_tile_id(unsigned int x, unsigned int y, unsigned int id);
+        
+        unsigned int get_width() const { return width; }
+        unsigned int get_height() const { return height; }
     
     private:
-        int cell_size;
-        int rows;
-        int cols;
-        int width;
-        int height;
+        unsigned int cell_size;
+        unsigned int rows;
+        unsigned int cols;
+        unsigned int width;
+        unsigned int height;
+        unsigned int tile_horizontal_gap;
+        unsigned int tile_vertical_gap;
+        unsigned int offset;
+        std::string tileset_filename;
+        unsigned int default_tile_id;
+        
         cell_collection cells;
         tileset tiles;
         
-        int calc_width() const;
-        int calc_height() const;
+        unsigned int calc_width() const;
+        unsigned int calc_height() const;
     
         bool read_tileset_information(const ALLEGRO_CONFIG *config);
         void draw_tileset() const;

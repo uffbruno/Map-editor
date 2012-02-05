@@ -15,6 +15,8 @@ class mapgrid {
         bool load_map(const std::string& mapfile);
         bool save_map(const std::string& mapfile);
         
+        void set_tile_id(unsigned int x, unsigned int y, unsigned int id);
+        
         void draw();
         void handle_input(const ALLEGRO_EVENT& ev);
         
