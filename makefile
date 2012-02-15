@@ -6,8 +6,13 @@ CPPFLAGS=-Wall -Wextra -pedantic -Weffc++ -Werror -g
 
 #all these link flags is for linking Allegro 5 statically with my application
 #so there is no need to send dlls along with executable and resources to distribution
-A5LINKFLAGS=-lallegro-static -lallegro_font-static -lallegro_ttf-static -lallegro_image-static -lallegro_primitives-static
-WIN32LINKFLAGS=-lopengl32 -lwinmm -luuid -lgdiplus -lfreetype -lole32 -lgdi32 -lkernel32 -lpsapi -lshlwapi -static-libgcc -static-libstdc++
+A5LINKFLAGS=-lallegro-static -lallegro_font-static -lallegro_ttf-static -lallegro_image-static -lallegro_primitives-static -lallegro_dialog-static
+WIN32LINKFLAGS=-lopengl32 -lwinmm -luuid -lgdiplus -lfreetype -lole32 -lgdi32 -lkernel32 -lpsapi -lshlwapi -lcomdlg32 -static-libgcc -static-libstdc++
+
+#for my simple game lib
+SGLIBFLAGS=-lsglib
+INCLUDES=../sglib/src/
+LIBS=../sglib/
 
 #some shell commands
 RM=rm
@@ -33,27 +38,21 @@ RESOURCESDIR=resources
 
 # 'make' looks for objects in the directories specified by VPATH
 VPATH=$(SRCDIR);$(OBJDIR);$(BINDIR)
-COMMON_OBJECTS=button.o animation.o character.o map2d.o sprite.o bounding_box.o char_2d.o mapgrid.o tile.o map_editor.o
+COMMON_OBJECTS=button.o mapgrid.o map_editor.o scrollbar.o
 MAPEDITOR_OBJECTS=main.o
 EXECUTABLE=mapeditor.exe
 
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(COMMON_OBJECTS) $(MAPEDITOR_OBJECTS)
-	$(CC) -o $(BINDIR)\$(EXECUTABLE) $(COMMON_OBJECTS) $(MAPEDITOR_OBJECTS) $(A5LINKFLAGS) $(WIN32LINKFLAGS)
+	$(CC) -o $(BINDIR)\$(EXECUTABLE) -I$(INCLUDES) -L$(LIBS) $(COMMON_OBJECTS) $(MAPEDITOR_OBJECTS) $(A5LINKFLAGS) $(WIN32LINKFLAGS) $(SGLIBFLAGS)
     
 #header file dependencies
 main.o: map_editor.hpp
 button.o: button.hpp
-mapgrid.o: mapgrid.hpp map2d.hpp
-animation.o: animation.hpp bounding_box.hpp
-character.o: character.hpp game_object.hpp
-map2d.o: map2d.hpp tile.hpp
-sprite.o: sprite.hpp animation.hpp
-bounding_box.o: bounding_box.hpp vector2d.hpp
-char_2d.o: char_2d.hpp character.hpp
-tile.o: tile.hpp game_object.hpp
+mapgrid.o: mapgrid.hpp $(INCLUDES)/map2d.hpp
 map_editor.o: map_editor.hpp mapgrid.hpp button.hpp
+scrollbar.o: scrollbar.hpp
 
 dist: $(EXECUTABLE)
 	$(MKDIR) $(DISTDIR)

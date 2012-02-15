@@ -5,7 +5,9 @@
 
 #include <allegro5/allegro_font.h>
 
-typedef void (*callback_type)();
+#include "map_editor.hpp"
+
+typedef void (*callback_type)(map_editor* const);
 
 class button {
     public:
@@ -22,7 +24,7 @@ class button {
         int get_w() const { return w; }
         int get_h() const { return h; }
         
-        void set_onclick_callback(callback_type ct) { this->ct = ct; }
+        void set_onclick_callback(callback_type ct, map_editor* const caller);
         void handle_input(const ALLEGRO_EVENT& ev);
         void draw();
     
@@ -33,6 +35,8 @@ class button {
         callback_type ct;
         ALLEGRO_COLOR color;
         ALLEGRO_COLOR mouseover_color;
+        
+        map_editor *caller;
         
         bool is_over(int x, int y) const;
         button(const button& other);

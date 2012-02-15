@@ -1,10 +1,16 @@
+#include <iostream>
 #include <allegro5/allegro_primitives.h>
 #include "button.hpp"
 
-button::button(const std::string& label, ALLEGRO_FONT *font, int x, int y, int w, int h) :
-    label(label), font(font), x(x), y(y), w(w), h(h), ct(0),
-    color(al_map_rgb(255,255,255)), 
-    mouseover_color(al_map_rgb(255,255,255)) {
+button::button(const std::string& label, ALLEGRO_FONT *font, 
+               int x, int y, int w, int h) : label(label), 
+                                             font(font), 
+                                             x(x), y(y), 
+                                             w(w), h(h), 
+                                             ct(0), 
+                                             color(al_map_rgb(255,255,255)), 
+                                             mouseover_color(al_map_rgb(255,255,255)), 
+                                             caller(0) {
 }
 
 button::~button() {
@@ -13,10 +19,9 @@ button::~button() {
 void button::handle_input(const ALLEGRO_EVENT &ev) {
     if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
         if (ct && is_over(ev.mouse.x, ev.mouse.y)) {
-            ct();
+            ct(caller);
         }
     }
-    
 }
 
 bool button::is_over(int px, int py) const {
@@ -33,4 +38,11 @@ void button::draw() {
     
     int ascent = al_get_font_ascent(font);
     al_draw_textf(font, al_map_rgb(255,255,255), x+w/2, y+h/2 - ascent/2, ALLEGRO_ALIGN_CENTRE, label.c_str());
+}
+
+void button::set_onclick_callback(callback_type ct, map_editor* const caller) {
+    if (caller) {
+        this->caller = caller;
+        this->ct     = ct    ;
+    }
 }
